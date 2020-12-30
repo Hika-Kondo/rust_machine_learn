@@ -1,5 +1,5 @@
 [package]
-name = "zenu"
+name = "rust_machine_learning"
 version = "0.1.0"
 authors = ["HikaruKondo"]
 edition = "2018"
