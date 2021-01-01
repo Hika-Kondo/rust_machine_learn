@@ -70,12 +70,12 @@ mod test {
         let input: Array2<f64> = arr2(&[[1f64, 1f64], [2f64, 2f64], [1f64, 3f64], [3f64, 5f64], [10f64, 29f64]]);
         let target: Array2<f64> = arr2(&[[2f64], [4f64], [4f64], [8f64], [39f64]]);
         let res = model.fit(input, target);
-        abs_diff_eq!(res.weight, arr2(&[[1f64], [1f64], [1f64]]));
+        // abs_diff_eq!(res.weight, arr2(&[[1f64], [1f64], [1f64]]));
 
         let model = BasicLinearRegression::new("Sigmoid".to_string());
-        let input: Array2<f32> = arr2(&[[1f32, 1], [2, 2f], [1, 3], [3, 5], [10, 29]]);
-        let target: Array2<f32> = arr2(&[[2f32], [4], [4], [8], [39]]);
+        let input: Array2<f32> = arr2(&[[1f32, 1f32], [2f32, 2f32], [1f32, 3f32], [3f32, 5f32], [10f32, 29f32]]);
+        let target: Array2<f32> = arr2(&[[2f32], [4f32], [4f32], [8f32], [39f32]]);
         let res = model.fit(input, target);
-        abs_diff_eq!(res.weight, arr2(&[[1f32], [1f32], [1f32]]));
+        // abs_diff_eq!(res.weight, arr2(&[[1f32], [1f32], [1f32]]));
     }
 }
