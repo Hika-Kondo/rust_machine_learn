@@ -1,5 +1,5 @@
 pub mod func;
-pub mod linear;
+// pub mod linear;
 pub mod estimator;
 
 // #[cfg(test)]
