@@ -1,7 +1,7 @@
-use ndarray::{Array2, Array1, Data, Ix1, Ix2, ArrayBase, NdFloat};
+use ndarray::{Array2, Array1, Ix1, Ix2, ArrayBase};
 use ndarray_linalg::InverseInto;
+use ndarray_linalg::lapack::Lapack;
 use ndarray_linalg::types::Scalar;
-use num_traits::Float;
 
 use crate::func::Sigmoid;
 use crate::estimator::{Estimator, Learner};
@@ -27,13 +27,13 @@ impl BasicLinearRegression {
 }
 
 
-pub struct BasicLinearRegressionResult<T: NdFloat> {
+pub struct BasicLinearRegressionResult<T: Scalar + Lapack> {
     weight: Array2<T>,
     config: BasicLinearRegression,
 }
 
 
-impl<T: f32> Learner<T> for BasicLinearRegression {
+impl<T: Scalar + Lapack> Learner<T> for BasicLinearRegression {
     type LearnedModel = BasicLinearRegressionResult::<T>;
     type Input = Array2<T>;
     type Target = Array2<T>;
@@ -56,29 +56,7 @@ impl<T: f32> Learner<T> for BasicLinearRegression {
         }
     }
 }
-impl<T: f64> Learner<T> for BasicLinearRegression {
-    type LearnedModel = BasicLinearRegressionResult::<T>;
-    type Input = Array2<T>;
-    type Target = Array2<T>;
-    fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel{
-        let input = match self.basicfunc {
-            BasicFunc::Sigmoid => input.sigmoid(),
-            BasicFunc::Gauss => input,
-            _ => input,
-        };
-        
-        // \bf{w}_{ML} = (\bf{\Phi}^T\bf{\Phi})^{-1} \Phi \bf{t}を計算
-        // PRML p139 上巻
-        let phi_t = input.t();
-        let phi_t_phi = phi_t.dot(&input);
-        let phi_t_phi_inv = phi_t_phi.inv_into().unwrap();
-        let weight = phi_t_phi_inv.dot(&phi_t).dot(&target);
-        BasicLinearRegressionResult::<T> {
-            weight: weight,
-            config: self.clone(),
-        }
-    }
-}
+
 
 #[cfg(test)]
 mod test {

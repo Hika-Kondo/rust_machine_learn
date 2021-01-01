@@ -1,7 +1,6 @@
-use ndarray::{Dimension, Array, Data, NdFloat, RawData};
+use ndarray::{Dimension, Array};
 use ndarray_linalg::lapack::Lapack;
 use ndarray_linalg::types::Scalar;
-use num_traits::Float;
 
 
 // Exp for ndarray
@@ -10,7 +9,7 @@ pub trait Exp {
     fn exp(&self) -> Self::ExpType;
 }
 
-impl<T: NdFloat, U: Dimension> Exp for Array<T, U> {
+impl<T: Scalar + Lapack, U: Dimension> Exp for Array<T, U> {
     type ExpType = Array<T, U>;
     fn exp(& self) -> Self::ExpType { 
         let x = self.clone();
@@ -25,7 +24,7 @@ pub trait Sigmoid {
     fn sigmoid(&self) -> Self::SigmoidType;
 }
 
-impl<T: NdFloat, U: Dimension > Sigmoid for Array<T, U> {
+impl<T: Scalar + Lapack, U: Dimension > Sigmoid for Array<T, U> {
     type SigmoidType = Array<T, U>;
     fn sigmoid(&self) -> Self::SigmoidType {
         let ones = Array::<T, U>::ones(self.raw_dim());
