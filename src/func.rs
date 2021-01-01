@@ -1,5 +1,8 @@
-use ndarray::{Dimension, Array};
+use ndarray::{Dimension, Array, Data, NdFloat, RawData};
+use ndarray_linalg::lapack::Lapack;
 use ndarray_linalg::types::Scalar;
+use num_traits::Float;
+
 
 // Exp for ndarray
 pub trait Exp {
@@ -7,10 +10,11 @@ pub trait Exp {
     fn exp(&self) -> Self::ExpType;
 }
 
-impl<T: Scalar,  U: Dimension> Exp for Array<T, U> {
+impl<T: NdFloat, U: Dimension> Exp for Array<T, U> {
     type ExpType = Array<T, U>;
     fn exp(& self) -> Self::ExpType { 
-        self.map(|x| x.exp())
+        let x = self.clone();
+        x.map(|item| item.exp())
         // self.exp()
     }
 }
@@ -21,14 +25,11 @@ pub trait Sigmoid {
     fn sigmoid(&self) -> Self::SigmoidType;
 }
 
-impl<F: Scalar, U: Dimension > Sigmoid for Array<F, U> {
-    type SigmoidType = Array<F, U>;
+impl<T: NdFloat, U: Dimension > Sigmoid for Array<T, U> {
+    type SigmoidType = Array<T, U>;
     fn sigmoid(&self) -> Self::SigmoidType {
-        // let one: T = num_traits::cast(1).unwrap();
-        // let ni: T = num_traits::cast(-1).unwrap();
-        // self.map(|x| one / (one + (*x * ni).exp()))
-        let ones = Array::<F, U>::ones(self.raw_dim());
-        let mimus = Array::<F, U>::zeros(self.raw_dim()) - self;
+        let ones = Array::<T, U>::ones(self.raw_dim());
+        let mimus = Array::<T, U>::zeros(self.raw_dim()) - self;
         ones.clone() / (ones + &mimus.exp())
     }
 }
