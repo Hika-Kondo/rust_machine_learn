@@ -6,6 +6,7 @@ use ndarray_linalg::types::Scalar;
 use crate::func::Sigmoid;
 use crate::estimator::{Estimator, Learner};
 
+
 #[derive(Clone, Debug, Copy)]
 enum BasicFunc {
     Sigmoid,
@@ -42,13 +43,6 @@ impl BasicLinearRegression {
 
 }
 
-
-pub struct BasicLinearRegressionResult<T: Scalar + Lapack> {
-    weight: Array2<T>,
-    config: BasicLinearRegression,
-}
-
-
 impl<T: Scalar + Lapack> Learner<T> for BasicLinearRegression {
     type LearnedModel = BasicLinearRegressionResult::<T>;
     type Input = Array2<T>;
@@ -72,16 +66,24 @@ impl<T: Scalar + Lapack> Learner<T> for BasicLinearRegression {
             config: self.clone(),
         }
     }
+
 }
 
-// impl<T: Scalar + Lapack> Estimator<T> for BasicLinearRegressionResult<T> {
-//     type EstimatorRes = BasicLinearRegressionResult::<T>;
-//     type Input = Array2<T>;
-    
-//     fn predict(&self, input: Self::Input) -> Array2<T> {
 
-//     }
-// }
+pub struct BasicLinearRegressionResult<T: Scalar + Lapack> {
+    weight: Array2<T>,
+    config: BasicLinearRegression,
+}
+
+impl<T: Scalar + Lapack> Estimator for BasicLinearRegressionResult<T> {
+    type Input = Array2<T>;
+    type Output = Array2<T>;
+    
+    fn predict(&self, input: Self::Input) -> Self::Output {
+        let input = preprocess(self.config.basicfunc, input);
+        self.weight.dot(&input)
+    }
+}
 
 
 #[cfg(test)]
@@ -99,6 +101,9 @@ mod test {
         let target: Array2<f64> = arr2(&[[2f64], [4f64], [4f64], [8f64], [39f64]]);
         let res = model.fit(input, target);
         abs_diff_eq!(res.weight, arr2(&[[1f64], [1f64], [1f64]]));
+        let test: Array2<f64> = arr2(&[[1f64, 2f64, 3f64]]);
+        let pred_res: Array2<f64> = res.predict(test);
+        abs_diff_eq!(pred_res, arr2(&[[6f64]]));
 
         let mode = "Sigmoid".to_string();
         let model = BasicLinearRegression::new(mode);
