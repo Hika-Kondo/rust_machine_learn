@@ -1,4 +1,4 @@
-use ndarray::{Array2, Array1, Ix1, Ix2, ArrayBase};
+use ndarray::Array2;
 use ndarray_linalg::InverseInto;
 use ndarray_linalg::lapack::Lapack;
 use ndarray_linalg::types::Scalar;
@@ -6,12 +6,21 @@ use ndarray_linalg::types::Scalar;
 use crate::func::Sigmoid;
 use crate::estimator::{Estimator, Learner};
 
-#[derive(Clone)]
+#[derive(Clone, Debug, Copy)]
 enum BasicFunc {
     Sigmoid,
     Gauss,
     None,
 }
+
+fn preprocess<T: Scalar + Lapack>(func: BasicFunc, input: Array2<T>) -> Array2<T> {
+    match func {
+        BasicFunc::Sigmoid => input.sigmoid(),
+        BasicFunc::Gauss => input,
+        BasicFunc::None => input,
+    }
+}
+
 
 #[derive(Clone)]
 pub struct BasicLinearRegression {
@@ -19,11 +28,18 @@ pub struct BasicLinearRegression {
 }
 
 impl BasicLinearRegression {
-    fn new(basic_func: String) -> Self {
+
+    pub fn new(str: String) -> Self {
+        let func = match &*str {
+            "Sigmoid" => BasicFunc::Sigmoid,
+            "Gauss" => BasicFunc::Gauss,
+            _ => BasicFunc::None,
+        };
         BasicLinearRegression {
-            basicfunc: BasicFunc::Sigmoid,
+            basicfunc: func
         }
     }
+
 }
 
 
@@ -38,11 +54,12 @@ impl<T: Scalar + Lapack> Learner<T> for BasicLinearRegression {
     type Input = Array2<T>;
     type Target = Array2<T>;
     fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel{
-        let input = match self.basicfunc {
-            BasicFunc::Sigmoid => input.sigmoid(),
-            BasicFunc::Gauss => input,
-            _ => input,
-        };
+        let input = preprocess(self.basicfunc, input);
+        // let input = match self.basicfunc {
+        //     BasicFunc::Sigmoid => input.sigmoid(),
+        //     BasicFunc::Gauss => input,
+        //     _ => input,
+        // };
         
         // \bf{w}_{ML} = (\bf{\Phi}^T\bf{\Phi})^{-1} \Phi \bf{t}を計算
         // PRML p139 上巻
@@ -57,6 +74,15 @@ impl<T: Scalar + Lapack> Learner<T> for BasicLinearRegression {
     }
 }
 
+// impl<T: Scalar + Lapack> Estimator<T> for BasicLinearRegressionResult<T> {
+//     type EstimatorRes = BasicLinearRegressionResult::<T>;
+//     type Input = Array2<T>;
+    
+//     fn predict(&self, input: Self::Input) -> Array2<T> {
+
+//     }
+// }
+
 
 #[cfg(test)]
 mod test {
@@ -66,16 +92,20 @@ mod test {
 
     #[test]
     fn test_basic() {
-        let model = BasicLinearRegression::new("Sigmoid".to_string());
-        let input: Array2<f64> = arr2(&[[1f64, 1f64], [2f64, 2f64], [1f64, 3f64], [3f64, 5f64], [10f64, 29f64]]);
+        let mode = "Sigmoid".to_string();
+        let model = BasicLinearRegression::new(mode);
+        let input: Array2<f64> = arr2(&[[1f64, 1f64], [2f64, 2f64], 
+            [1f64, 3f64], [3f64, 5f64], [10f64, 29f64]]);
         let target: Array2<f64> = arr2(&[[2f64], [4f64], [4f64], [8f64], [39f64]]);
         let res = model.fit(input, target);
-        // abs_diff_eq!(res.weight, arr2(&[[1f64], [1f64], [1f64]]));
+        abs_diff_eq!(res.weight, arr2(&[[1f64], [1f64], [1f64]]));
 
-        let model = BasicLinearRegression::new("Sigmoid".to_string());
-        let input: Array2<f32> = arr2(&[[1f32, 1f32], [2f32, 2f32], [1f32, 3f32], [3f32, 5f32], [10f32, 29f32]]);
+        let mode = "Sigmoid".to_string();
+        let model = BasicLinearRegression::new(mode);
+        let input: Array2<f32> = arr2(&[[1f32, 1f32], [2f32, 2f32], 
+            [1f32, 3f32], [3f32, 5f32], [10f32, 29f32]]);
         let target: Array2<f32> = arr2(&[[2f32], [4f32], [4f32], [8f32], [39f32]]);
         let res = model.fit(input, target);
-        // abs_diff_eq!(res.weight, arr2(&[[1f32], [1f32], [1f32]]));
+        abs_diff_eq!(res.weight, arr2(&[[1f32], [1f32], [1f32]]));
     }
 }
