@@ -8,6 +8,6 @@ use approx::abs_diff_eq;
 
 #[test]
 fn regression() {
-    use rust_machine_learning::linear::basic::*;
+    use rust_machine_learning::linear::BasicLinearRegression;
     let model = BasicLinearRegression::new("Sigmoid".to_string());
 }
