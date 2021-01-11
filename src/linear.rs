@@ -1,4 +1,4 @@
 #[macro_use]
-mod basic;
+mod regression;
 
-pub use basic::BasicLinearRegression;
+pub use regression::BasicLinearRegression;

@@ -11,14 +11,12 @@ use crate::rml_type::RMLType;
 #[derive(Clone, Debug, Copy)]
 enum BasicFunc {
     Sigmoid,
-    Gauss,
     None,
 }
 
 fn preprocess<T: RMLType>(func: BasicFunc, input: Array2<T>) -> Array2<T> {
     match func {
         BasicFunc::Sigmoid => input.sigmoid(),
-        BasicFunc::Gauss => input,
         BasicFunc::None => input,
     }
 }
@@ -34,7 +32,6 @@ impl BasicLinearRegression {
     pub fn new(str: String) -> Self {
         let func = match &*str {
             "Sigmoid" => BasicFunc::Sigmoid,
-            "Gauss" => BasicFunc::Gauss,
             _ => BasicFunc::None,
         };
         BasicLinearRegression {
@@ -58,10 +55,11 @@ impl<T: RMLType> Learner<T> for BasicLinearRegression {
         
         // \bf{w}_{ML} = (\bf{\Phi}^T\bf{\Phi})^{-1} \Phi \bf{t}を計算
         // PRML p139 上巻
-        let phi_t = input.t();
-        let phi_t_phi = phi_t.dot(&input);
-        let phi_t_phi_inv = phi_t_phi.inv_into().unwrap();
-        let weight = phi_t_phi_inv.dot(&phi_t).dot(&target);
+        // let phi_t = input.t();
+        // let phi_t_phi = phi_t.dot(&input);
+        // let phi_t_phi_inv = phi_t_phi.inv_into().unwrap();
+        // let weight = phi_t_phi_inv.dot(&phi_t).dot(&target);
+        let weight = cal_weight(input, target);
         BasicLinearRegressionResult::<T> {
             weight: weight,
             config: self.clone(),
@@ -70,6 +68,13 @@ impl<T: RMLType> Learner<T> for BasicLinearRegression {
 
 }
 
+fn cal_weight<T: RMLType>(input: Array2<T>, target: Array2<T>) -> Array2<T>{
+    let phi_t = input.t();
+    let phi_t_phi = phi_t.dot(&input);
+    let phi_t_phi_inv = phi_t_phi.inv_into().unwrap();
+    phi_t_phi_inv.dot(&phi_t).dot(&target)
+
+}
 
 pub struct BasicLinearRegressionResult<T: RMLType> {
     weight: Array2<T>,
