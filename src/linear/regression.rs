@@ -1,7 +1,5 @@
 use ndarray::Array2;
 use ndarray_linalg::InverseInto;
-// use ndarray_linalg::lapack::Lapack;
-// use ndarray_linalg::types::Scalar;
 
 use crate::func::Sigmoid;
 use crate::estimator::{Estimator, Learner};
@@ -25,11 +23,12 @@ fn preprocess<T: RMLType>(func: BasicFunc, input: Array2<T>) -> Array2<T> {
 #[derive(Clone)]
 pub struct BasicLinearRegression {
     basicfunc: BasicFunc,
+    iterative: bool;
 }
 
 impl BasicLinearRegression {
 
-    pub fn new(str: String) -> Self {
+    pub fn new(str: String, iterative: bool=false) -> Self {
         let func = match &*str {
             "Sigmoid" => BasicFunc::Sigmoid,
             _ => BasicFunc::None,
@@ -47,19 +46,13 @@ impl<T: RMLType> Learner<T> for BasicLinearRegression {
     type Target = Array2<T>;
     fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel{
         let input = preprocess(self.basicfunc, input);
-        // let input = match self.basicfunc {
-        //     BasicFunc::Sigmoid => input.sigmoid(),
-        //     BasicFunc::Gauss => input,
-        //     _ => input,
-        // };
+        let input = match self.basicfunc {
+            BasicFunc::Sigmoid => input.sigmoid(),
+            _ => input,
+        };
         
-        // \bf{w}_{ML} = (\bf{\Phi}^T\bf{\Phi})^{-1} \Phi \bf{t}を計算
-        // PRML p139 上巻
-        // let phi_t = input.t();
-        // let phi_t_phi = phi_t.dot(&input);
-        // let phi_t_phi_inv = phi_t_phi.inv_into().unwrap();
-        // let weight = phi_t_phi_inv.dot(&phi_t).dot(&target);
         let weight = cal_weight(input, target);
+        
         BasicLinearRegressionResult::<T> {
             weight: weight,
             config: self.clone(),
@@ -69,6 +62,8 @@ impl<T: RMLType> Learner<T> for BasicLinearRegression {
 }
 
 fn cal_weight<T: RMLType>(input: Array2<T>, target: Array2<T>) -> Array2<T>{
+    // \bf{w}_{ML} = (\bf{\Phi}^T\bf{\Phi})^{-1} \Phi \bf{t}を計算
+    // PRML p139 上巻
     let phi_t = input.t();
     let phi_t_phi = phi_t.dot(&input);
     let phi_t_phi_inv = phi_t_phi.inv_into().unwrap();
