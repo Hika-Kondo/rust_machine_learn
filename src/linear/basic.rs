@@ -1,10 +1,11 @@
 use ndarray::Array2;
 use ndarray_linalg::InverseInto;
-use ndarray_linalg::lapack::Lapack;
-use ndarray_linalg::types::Scalar;
+// use ndarray_linalg::lapack::Lapack;
+// use ndarray_linalg::types::Scalar;
 
 use crate::func::Sigmoid;
 use crate::estimator::{Estimator, Learner};
+use crate::rml_type::RMLType;
 
 
 #[derive(Clone, Debug, Copy)]
@@ -14,7 +15,7 @@ enum BasicFunc {
     None,
 }
 
-fn preprocess<T: Scalar + Lapack>(func: BasicFunc, input: Array2<T>) -> Array2<T> {
+fn preprocess<T: RMLType>(func: BasicFunc, input: Array2<T>) -> Array2<T> {
     match func {
         BasicFunc::Sigmoid => input.sigmoid(),
         BasicFunc::Gauss => input,
@@ -43,7 +44,7 @@ impl BasicLinearRegression {
 
 }
 
-impl<T: Scalar + Lapack> Learner<T> for BasicLinearRegression {
+impl<T: RMLType> Learner<T> for BasicLinearRegression {
     type LearnedModel = BasicLinearRegressionResult::<T>;
     type Input = Array2<T>;
     type Target = Array2<T>;
@@ -70,12 +71,12 @@ impl<T: Scalar + Lapack> Learner<T> for BasicLinearRegression {
 }
 
 
-pub struct BasicLinearRegressionResult<T: Scalar + Lapack> {
+pub struct BasicLinearRegressionResult<T: RMLType> {
     weight: Array2<T>,
     config: BasicLinearRegression,
 }
 
-impl<T: Scalar + Lapack> Estimator for BasicLinearRegressionResult<T> {
+impl<T: RMLType> Estimator for BasicLinearRegressionResult<T> {
     type Input = Array2<T>;
     type Output = Array2<T>;
     

@@ -6,7 +6,6 @@ pub trait Learner<T> {
 }
 
 pub trait Estimator {
-    // type EstimatorRes;
     type Input;
     type Output;
     fn predict(&self, input: Self::Input) -> Self::Output;
