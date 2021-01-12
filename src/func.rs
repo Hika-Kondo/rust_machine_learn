@@ -1,6 +1,6 @@
 use ndarray::{Dimension, Array};
 
-use crate::rml_type::RMLType;
+use crate::traits::RMLType;
 
 
 // Exp for ndarray

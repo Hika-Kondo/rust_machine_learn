@@ -1,40 +1,24 @@
 use ndarray::Array2;
-use ndarray_linalg::InverseInto;
 
-use crate::func::Sigmoid;
 use crate::estimator::{Estimator, Learner};
-use crate::rml_type::RMLType;
-
-
-#[derive(Clone, Debug, Copy)]
-enum BasicFunc {
-    Sigmoid,
-    None,
-}
-
-fn preprocess<T: RMLType>(func: BasicFunc, input: Array2<T>) -> Array2<T> {
-    match func {
-        BasicFunc::Sigmoid => input.sigmoid(),
-        BasicFunc::None => input,
-    }
-}
+use crate::traits::RMLType;
+use crate::linear::{cal_weight, BasicFunc, preprocess};
 
 
 #[derive(Clone)]
 pub struct BasicLinearRegression {
     basicfunc: BasicFunc,
-    iterative: bool;
 }
 
 impl BasicLinearRegression {
 
-    pub fn new(str: String, iterative: bool=false) -> Self {
+    pub fn new(str: String) -> Self {
         let func = match &*str {
             "Sigmoid" => BasicFunc::Sigmoid,
             _ => BasicFunc::None,
         };
         BasicLinearRegression {
-            basicfunc: func
+            basicfunc: func,
         }
     }
 
@@ -46,10 +30,6 @@ impl<T: RMLType> Learner<T> for BasicLinearRegression {
     type Target = Array2<T>;
     fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel{
         let input = preprocess(self.basicfunc, input);
-        let input = match self.basicfunc {
-            BasicFunc::Sigmoid => input.sigmoid(),
-            _ => input,
-        };
         
         let weight = cal_weight(input, target);
         
@@ -58,18 +38,8 @@ impl<T: RMLType> Learner<T> for BasicLinearRegression {
             config: self.clone(),
         }
     }
-
 }
 
-fn cal_weight<T: RMLType>(input: Array2<T>, target: Array2<T>) -> Array2<T>{
-    // \bf{w}_{ML} = (\bf{\Phi}^T\bf{\Phi})^{-1} \Phi \bf{t}を計算
-    // PRML p139 上巻
-    let phi_t = input.t();
-    let phi_t_phi = phi_t.dot(&input);
-    let phi_t_phi_inv = phi_t_phi.inv_into().unwrap();
-    phi_t_phi_inv.dot(&phi_t).dot(&target)
-
-}
 
 pub struct BasicLinearRegressionResult<T: RMLType> {
     weight: Array2<T>,
