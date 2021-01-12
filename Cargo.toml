@@ -8,7 +8,9 @@ edition = "2018"
 
 [dependencies]
 ndarray = "0.13.0"
-ndarray-rand = "0.12.0"
+ndarray-rand = "0.11.0"
 ndarray-linalg = { version = "0.12.1", features = ["intel-mkl"] }
+ndarray-stats = "0.3"
 num-traits = "0.2.14"
-approx = "0.3.0"
+approx = "0.3.1"
+rand = "0.8.1"
