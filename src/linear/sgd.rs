@@ -46,13 +46,12 @@ impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
         // let mut weight = Array2::<T>::random((1, input.shape()[0]), Normal::<T>::new(1., 1.).unwrap());
         // let mut weight = Array2::<T>::random((1,15), Uniform::new(-10., 10.));
         let mut weight = Array::<T, _>::zeros((1,input.shape()[1]));
-        println!("{:?}", weight.shape());
         for epoch in 0..self.epoch as usize {
-            for idx in 0..input.len() as usize {
+            for idx in 0..input.shape()[0] as usize {
                 let batch = input.index_axis(Axis(0), idx).insert_axis(Axis(0));
                 let now_target = target.index_axis(Axis(0), idx).insert_axis(Axis(0));
-                let weight_t = weight.t();
-                let res = now_target.into_owned() - weight_t.dot(&batch);
+                let weight_clone = weight.clone();
+                let res = now_target.into_owned() - weight_clone.dot(&batch.t());
                 let res = res.dot(&batch);
                 weight = weight + res.mapv(|a| a * self.lr);
             }
@@ -69,14 +68,18 @@ impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
 mod test {
     use super::*;
     use ndarray::*;
+    use approx::abs_diff_eq;
 
     #[test]
     fn test_iter() {
         let mode = "Sigmoid".to_string();
         let model = IterLinearRegression::new(mode, 100 as u32, 1e-3);
-        let input: Array2<f64> = arr2(&[[1f64, 1f64], [2f64, 2f64], 
-            [1f64, 3f64], [3f64, 5f64], [10f64, 29f64]]);
-        let target: Array2<f64> = arr2(&[[2f64], [4f64], [4f64], [8f64], [39f64]]);
+        let weight = Array::random((1,15), Normal::new(1.,1.).unwrap());
+        let input = Array::random((10, 15), Normal::new(1.,1.).unwrap());
+        let target = input.dot(&weight.t());
+        println!("{:8.4}", target);
+        println!("{:8.4}", weight);
         let res = model.fit(input, target);
-    }
+        abs_diff_eq!(res.weight, weight);
+        }
 }
