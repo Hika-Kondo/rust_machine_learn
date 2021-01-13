@@ -21,7 +21,7 @@ This is a model that we plan to implement in the future.
 - [ ] Principal Component Analysis
 
 # How To Use Cargo
-````
+```
 [dependencies].
 rust_machine_learning = { git = "https://github.com/bokutotu/rust_machine_learn" }
 ```
