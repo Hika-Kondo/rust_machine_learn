@@ -63,6 +63,14 @@ impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
     }
 }
 
+impl<T:RMLType> Estimator for IterLinearRegressionResult<T> {
+    type Input = Array2<T>;
+    type Output = Array2<T>;
+    fn predict(&self, input: Self::Input) -> Self::Output {
+        let input = preprocess(self.config.basicfunc, input);
+        input.dot(&self.weight.t())
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -77,9 +85,10 @@ mod test {
         let weight = Array::random((1,15), Normal::new(1.,1.).unwrap());
         let input = Array::random((10, 15), Normal::new(1.,1.).unwrap());
         let target = input.dot(&weight.t());
-        println!("{:8.4}", target);
-        println!("{:8.4}", weight);
         let res = model.fit(input, target);
-        abs_diff_eq!(res.weight, weight);
+        let test_input = Array::random((12, 15), Normal::new(1.,1.).unwrap());
+        let test_target = test_input.dot(&weight.t());
+        let pred = res.predict(test_input);
+        abs_diff_eq!(pred, test_target);
         }
 }

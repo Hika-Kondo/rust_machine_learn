@@ -52,7 +52,8 @@ impl<T: RMLType> Estimator for BasicLinearRegressionResult<T> {
     
     fn predict(&self, input: Self::Input) -> Self::Output {
         let input = preprocess(self.config.basicfunc, input);
-        self.weight.dot(&input)
+        println!("{:?}", input.shape());
+        input.dot(&self.weight)
     }
 }
 
@@ -62,26 +63,21 @@ mod test {
     use super::*;
     use ndarray::*;
     use approx::abs_diff_eq;
+    use ndarray_rand::RandomExt;
+    use ndarray_rand::rand_distr::Normal;
+    use ndarray_stats::QuantileExt;
 
     #[test]
     fn test_basic() {
         let mode = "Sigmoid".to_string();
         let model = BasicLinearRegression::new(mode);
-        let input: Array2<f64> = arr2(&[[1f64, 1f64], [2f64, 2f64], 
-            [1f64, 3f64], [3f64, 5f64], [10f64, 29f64]]);
-        let target: Array2<f64> = arr2(&[[2f64], [4f64], [4f64], [8f64], [39f64]]);
+        let weight = Array::random((1,15), Normal::new(1.,1.).unwrap());
+        let input = Array::random((10, 15), Normal::new(1.,1.).unwrap());
+        let target = input.dot(&weight.t());
         let res = model.fit(input, target);
-        abs_diff_eq!(res.weight, arr2(&[[1f64], [1f64], [1f64]]));
-        let test: Array2<f64> = arr2(&[[1f64, 2f64, 3f64]]);
-        let pred_res: Array2<f64> = res.predict(test);
-        abs_diff_eq!(pred_res, arr2(&[[6f64]]));
-
-        let mode = "Sigmoid".to_string();
-        let model = BasicLinearRegression::new(mode);
-        let input: Array2<f32> = arr2(&[[1f32, 1f32], [2f32, 2f32], 
-            [1f32, 3f32], [3f32, 5f32], [10f32, 29f32]]);
-        let target: Array2<f32> = arr2(&[[2f32], [4f32], [4f32], [8f32], [39f32]]);
-        let res = model.fit(input, target);
-        abs_diff_eq!(res.weight, arr2(&[[1f32], [1f32], [1f32]]));
+        let test_input = Array::random((12, 15), Normal::new(1.,1.).unwrap());
+        let test_target = test_input.dot(&weight.t());
+        let pred = res.predict(test_input);
+        abs_diff_eq!(pred, test_target);
     }
 }
