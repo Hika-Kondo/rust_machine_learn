@@ -1,8 +1,9 @@
 use ndarray::Array2;
+use ndarray_linalg::InverseInto;
 
-use crate::estimator::{Estimator, Learner};
+use crate::estimator::{Learner};
 use crate::traits::RMLType;
-use crate::linear::{cal_weight, BasicFunc, preprocess};
+use crate::linear::{BasicFunc, preprocess, LinearResult, Estimator};
 
 
 #[derive(Clone)]
@@ -25,7 +26,7 @@ impl BasicLinearRegression {
 }
 
 impl<T: RMLType> Learner<T> for BasicLinearRegression {
-    type LearnedModel = BasicLinearRegressionResult::<T>;
+    type LearnedModel = LinearResult::<T>;
     type Input = Array2<T>;
     type Target = Array2<T>;
     fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel{
@@ -33,29 +34,38 @@ impl<T: RMLType> Learner<T> for BasicLinearRegression {
         
         let weight = cal_weight(input, target);
         
-        BasicLinearRegressionResult::<T> {
+        LinearResult::<T> {
             weight: weight,
-            config: self.clone(),
+            basicfunc: self.basicfunc.clone(),
         }
     }
 }
 
+pub fn cal_weight<T: RMLType>(input: Array2<T>, target: Array2<T>) -> Array2<T>{
+    // \bf{w}_{ML} = (\bf{\Phi}^T\bf{\Phi})^{-1} \Phi \bf{t}を計算
+    // PRML p139 上巻
+    let phi_t = input.t();
+    let phi_t_phi = phi_t.dot(&input);
+    let phi_t_phi_inv = phi_t_phi.inv_into().unwrap();
+    phi_t_phi_inv.dot(&phi_t).dot(&target)
+
+}
 
 pub struct BasicLinearRegressionResult<T: RMLType> {
     weight: Array2<T>,
     config: BasicLinearRegression,
 }
 
-impl<T: RMLType> Estimator for BasicLinearRegressionResult<T> {
-    type Input = Array2<T>;
-    type Output = Array2<T>;
+
+// impl<T: RMLType> Estimator for BasicLinearRegressionResult<T> {
+//     type Input = Array2<T>;
+//     type Output = Array2<T>;
     
-    fn predict(&self, input: Self::Input) -> Self::Output {
-        let input = preprocess(self.config.basicfunc, input);
-        println!("{:?}", input.shape());
-        input.dot(&self.weight)
-    }
-}
+//     fn predict(&self, input: Self::Input) -> Self::Output {
+//         let input = preprocess(self.config.basicfunc, input);
+//         input.dot(&self.weight)
+//     }
+// }
 
 
 #[cfg(test)]
@@ -75,6 +85,9 @@ mod test {
         let input = Array::random((10, 15), Normal::new(1.,1.).unwrap());
         let target = input.dot(&weight.t());
         let res = model.fit(input, target);
+        println!("regression is {:?}", res.weight.shape());
+        println!("regression is {:?}", res.weight.shape());
+        println!("regression is {:?}", res.weight.shape());
         let test_input = Array::random((12, 15), Normal::new(1.,1.).unwrap());
         let test_target = test_input.dot(&weight.t());
         let pred = res.predict(test_input);

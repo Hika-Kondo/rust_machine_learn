@@ -3,9 +3,9 @@ use ndarray_rand::RandomExt;
 use ndarray_rand::rand_distr::Normal;
 use ndarray_stats::QuantileExt;
 
-use crate::estimator::{Estimator, Learner};
+use crate::estimator::{Learner};
 use crate::traits::RMLType;
-use crate::linear::{BasicFunc, preprocess};
+use crate::linear::{BasicFunc, preprocess, LinearResult, Estimator};
 
 
 #[derive(Clone)]
@@ -37,7 +37,7 @@ pub struct IterLinearRegressionResult<T: RMLType> {
 }
 
 impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
-    type LearnedModel = IterLinearRegressionResult::<T>;
+    type LearnedModel = LinearResult::<T>;
     type Input = Array2<T>;
     type Target = Array2<T>;
     fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel {
@@ -56,21 +56,22 @@ impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
                 weight = weight + res.mapv(|a| a * self.lr);
             }
         }
-        IterLinearRegressionResult {
-            weight: weight,
-            config: self.clone(),
+        Self::LearnedModel {
+            weight: weight.t().into_owned(),
+            basicfunc: self.basicfunc.clone(),
         }
     }
 }
 
-impl<T:RMLType> Estimator for IterLinearRegressionResult<T> {
-    type Input = Array2<T>;
-    type Output = Array2<T>;
-    fn predict(&self, input: Self::Input) -> Self::Output {
-        let input = preprocess(self.config.basicfunc, input);
-        input.dot(&self.weight.t())
-    }
-}
+// impl<T:RMLType> Estimator for IterLinearRegressionResult<T> {
+//     type Input = Array2<T>;
+//     type Output = Array2<T>;
+//     fn predict(&self, input: Self::Input) -> Self::Output {
+//         let input = preprocess(self.config.basicfunc, input);
+//         input.dot(&self.weight)
+//         // input.dot(&self.weight.t())
+//     }
+// }
 
 #[cfg(test)]
 mod test {
@@ -86,6 +87,7 @@ mod test {
         let input = Array::random((10, 15), Normal::new(1.,1.).unwrap());
         let target = input.dot(&weight.t());
         let res = model.fit(input, target);
+        println!("sgd weight is {:?}", res.weight.shape());
         let test_input = Array::random((12, 15), Normal::new(1.,1.).unwrap());
         let test_target = test_input.dot(&weight.t());
         let pred = res.predict(test_input);
