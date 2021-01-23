@@ -12,7 +12,7 @@ This is a model that we plan to implement in the future.
 - [ ] linear regression
     - [x] linear regression
     - [x] iterative linear regression
-    - [ ] Rosso regression 
+    - [ ] Lasso regression 
 - [ ] linear discrimination
 - [ ] neural network
 - [ ] Kernel method
