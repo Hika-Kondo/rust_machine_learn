@@ -59,7 +59,6 @@ mod test {
     use approx::abs_diff_eq;
     use ndarray_rand::RandomExt;
     use ndarray_rand::rand_distr::Normal;
-    use ndarray_stats::QuantileExt;
 
     #[test]
     fn test_basic() {
