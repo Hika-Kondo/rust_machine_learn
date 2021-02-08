@@ -13,11 +13,12 @@ pub struct IterLinearRegression<T: RMLType> {
     basicfunc: BasicFunc,
     epoch: u32,
     lr: T,
+    lasso: T,
 }
 
 
 impl<T: RMLType> IterLinearRegression::<T> {
-    pub fn new(str: String, epoch: u32, lr: T) -> IterLinearRegression::<T> {
+    pub fn new(str: String, epoch: u32, lr: T, lasso: T) -> IterLinearRegression::<T> {
         let func = match &*str {
             "Sigmoid" => BasicFunc::Sigmoid,
             _ => BasicFunc::None,
@@ -26,15 +27,11 @@ impl<T: RMLType> IterLinearRegression::<T> {
             basicfunc: func,
             epoch: epoch,
             lr: lr,
+            lasso: lasso,
         }
     }
 }
 
-
-pub struct IterLinearRegressionResult<T: RMLType> {
-    weight: Array2<T>,
-    config: IterLinearRegression::<T>,
-}
 
 impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
     type LearnedModel = LinearResult::<T>;
@@ -53,7 +50,7 @@ impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
                 let weight_clone = weight.clone();
                 let res = now_target.into_owned() - weight_clone.dot(&batch.t());
                 let res = res.dot(&batch);
-                weight = weight + res.mapv(|a| a * self.lr);
+                weight = weight + res.mapv(|a| a * self.lr) + self.lasso * res.sum()
             }
         }
         Self::LearnedModel {
@@ -63,15 +60,6 @@ impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
     }
 }
 
-// impl<T:RMLType> Estimator for IterLinearRegressionResult<T> {
-//     type Input = Array2<T>;
-//     type Output = Array2<T>;
-//     fn predict(&self, input: Self::Input) -> Self::Output {
-//         let input = preprocess(self.config.basicfunc, input);
-//         input.dot(&self.weight)
-//         // input.dot(&self.weight.t())
-//     }
-// }
 
 #[cfg(test)]
 mod test {
@@ -82,9 +70,9 @@ mod test {
     #[test]
     fn test_iter() {
         let mode = "Sigmoid".to_string();
-        let model = IterLinearRegression::new(mode, 100 as u32, 1e-3);
+        let model = IterLinearRegression::new(mode, 100 as u32, 1e-3, 1e-5);
         let weight = Array::random((1,15), Normal::new(1.,1.).unwrap());
-        let input = Array::random((10, 15), Normal::new(1.,1.).unwrap());
+        let input = Array::random((100, 15), Normal::new(1.,1.).unwrap());
         let target = input.dot(&weight.t());
         let res = model.fit(input, target);
         println!("sgd weight is {:?}", res.weight.shape());

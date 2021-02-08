@@ -51,22 +51,6 @@ pub fn cal_weight<T: RMLType>(input: Array2<T>, target: Array2<T>) -> Array2<T>{
 
 }
 
-pub struct BasicLinearRegressionResult<T: RMLType> {
-    weight: Array2<T>,
-    config: BasicLinearRegression,
-}
-
-
-// impl<T: RMLType> Estimator for BasicLinearRegressionResult<T> {
-//     type Input = Array2<T>;
-//     type Output = Array2<T>;
-    
-//     fn predict(&self, input: Self::Input) -> Self::Output {
-//         let input = preprocess(self.config.basicfunc, input);
-//         input.dot(&self.weight)
-//     }
-// }
-
 
 #[cfg(test)]
 mod test {
