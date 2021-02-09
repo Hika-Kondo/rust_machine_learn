@@ -14,7 +14,8 @@ This is a model that we plan to implement in the future.
     - [x] iterative linear regression
     - [x] Lasso regression 
     - [x] Ridge regression
-    - [ ] multi demention
+    - [x] multi demention
+    - [ ] bayes linear regression
 - [ ] linear discrimination
 - [ ] neural network
 - [ ] Kernel method
