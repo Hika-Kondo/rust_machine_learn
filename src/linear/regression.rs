@@ -3,43 +3,8 @@ use ndarray_linalg::InverseInto;
 
 use crate::estimator::{Learner};
 use crate::traits::RMLType;
-use crate::linear::{BasicFunc, preprocess, LinearResult, Estimator};
+use crate::linear::LinearResult;
 
-
-#[derive(Clone)]
-pub struct BasicLinearRegression {
-    basicfunc: BasicFunc,
-}
-
-impl BasicLinearRegression {
-
-    pub fn new(str: String) -> Self {
-        let func = match &*str {
-            "Sigmoid" => BasicFunc::Sigmoid,
-            _ => BasicFunc::None,
-        };
-        BasicLinearRegression {
-            basicfunc: func,
-        }
-    }
-
-}
-
-impl<T: RMLType> Learner<T> for BasicLinearRegression {
-    type LearnedModel = LinearResult::<T>;
-    type Input = Array2<T>;
-    type Target = Array2<T>;
-    fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel{
-        let input = preprocess(self.basicfunc, input);
-        
-        let weight = cal_weight(input, target);
-        
-        LinearResult::<T> {
-            weight: weight,
-            basicfunc: self.basicfunc.clone(),
-        }
-    }
-}
 
 pub fn cal_weight<T: RMLType>(input: Array2<T>, target: Array2<T>) -> Array2<T>{
     // \bf{w}_{ML} = (\bf{\Phi}^T\bf{\Phi})^{-1} \Phi \bf{t}を計算
@@ -52,6 +17,56 @@ pub fn cal_weight<T: RMLType>(input: Array2<T>, target: Array2<T>) -> Array2<T>{
 }
 
 
+#[derive(Clone)]
+pub struct BasicLinearRegression;
+
+impl BasicLinearRegression {
+
+    pub fn new() -> Self {
+        BasicLinearRegression
+    }
+
+}
+
+impl<T: RMLType> Learner<T> for BasicLinearRegression {
+    type LearnedModel = LinearResult::<T>;
+    type Input = Array2<T>;
+    type Target = Array2<T>;
+    fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel{
+        
+        let weight = cal_weight(input, target);
+        
+        LinearResult::<T> {
+            weight: weight,
+        }
+    }
+}
+
+
+#[derive(Clone)]
+pub struct MultiDimLinearRegression;
+
+impl MultiDimLinearRegression {
+    pub fn new() -> Self {
+        MultiDimLinearRegression
+    }
+}
+
+
+impl<T: RMLType> Learner<T> for MultiDimLinearRegression {
+    type LearnedModel = LinearResult::<T>;
+    type Input = Array2<T>;
+    type Target = Array2<T>;
+    fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel{
+        let weight = cal_weight(input, target);
+        
+        LinearResult::<T> {
+            weight: weight,
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -60,17 +75,31 @@ mod test {
     use ndarray_rand::rand_distr::Normal;
     use approx::assert_abs_diff_eq;
 
+    use crate::linear::Estimator;
+
     #[test]
     fn test_basic() {
-        let mode = "_Sigmoid".to_string();
-        let model = BasicLinearRegression::new(mode);
+        let model = BasicLinearRegression::new();
         let weight = Array::random((1,15), Normal::new(1.,1.).unwrap());
-        let input = Array::random((100, 15), Normal::new(1.,1.).unwrap());
+        let input = Array::random((1000, 15), Normal::new(1.,1.).unwrap());
         let target = input.dot(&weight.t());
         let res = model.fit(input, target);
         println!("regression is {:?}", res.weight.shape());
         println!("regression is {:?}", res.weight.shape());
         println!("regression is {:?}", res.weight.shape());
+        let test_input = Array::random((12, 15), Normal::new(1.,1.).unwrap());
+        let test_target = test_input.dot(&weight.t());
+        let pred = res.predict(test_input);
+        assert_abs_diff_eq!(pred, test_target, epsilon=1e-3);
+    }
+
+    #[test]
+    fn test_multi() {
+        let model = MultiDimLinearRegression::new();
+        let weight = Array::random((12,15), Normal::new(1.,1.).unwrap());
+        let input = Array2::random((1000, 15), Normal::new(1.,1.).unwrap());
+        let target = input.dot(&weight.t());
+        let res = model.fit(input, target);
         let test_input = Array::random((12, 15), Normal::new(1.,1.).unwrap());
         let test_target = test_input.dot(&weight.t());
         let pred = res.predict(test_input);

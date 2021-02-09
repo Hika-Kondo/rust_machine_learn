@@ -9,5 +9,5 @@
 #[test]
 fn regression() {
     use rust_machine_learning::linear::BasicLinearRegression;
-    let _model = BasicLinearRegression::new("Sigmoid".to_string());
+    let _model = BasicLinearRegression::new();
 }

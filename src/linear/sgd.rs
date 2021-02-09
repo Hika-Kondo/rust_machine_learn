@@ -1,19 +1,14 @@
 use ndarray::{Array2, Array , Axis, ScalarOperand};
-use ndarray::parallel;
-use ndarray_rand::rand_distr::Normal;
-use ndarray::prelude::*;
-use ndarray_rand::RandomExt;
 use ndarray_linalg::norm::Norm;
 use ndarray_linalg::types::Scalar;
 
 use crate::estimator::{Learner};
 use crate::traits::RMLType;
-use crate::linear::{BasicFunc, preprocess, LinearResult, Estimator};
+use crate::linear::LinearResult;
 
 
 #[derive(Clone)]
 pub struct IterLinearRegression<T: RMLType> {
-    basicfunc: BasicFunc,
     epoch: u32,
     lr: T,
     lasso: T,
@@ -22,13 +17,8 @@ pub struct IterLinearRegression<T: RMLType> {
 
 
 impl<T: RMLType> IterLinearRegression::<T> {
-    pub fn new(str: String, epoch: u32, lr: T, lasso: T, ridge: T) -> IterLinearRegression::<T> {
-        let func = match &*str {
-            "Sigmoid" => BasicFunc::Sigmoid,
-            _ => BasicFunc::None,
-        };
+    pub fn new(epoch: u32, lr: T, lasso: T, ridge: T) -> IterLinearRegression::<T> {
         IterLinearRegression {
-            basicfunc: func,
             epoch: epoch,
             lr: lr,
             lasso: lasso,
@@ -43,7 +33,6 @@ impl<T: RMLType + ScalarOperand + Scalar<Real = T>> Learner<T> for IterLinearReg
     type Input = Array2<T>;
     type Target = Array2<T>;
     fn fit(&self, input: Self::Input, target: Self::Target) -> Self::LearnedModel {
-        let input = preprocess(self.basicfunc, input);
 
         // let mut weight = Array2::<T>::random((1, input.shape()[0]), Normal::<T>::new(1., 1.).unwrap());
         // let mut weight = Array2::<T>::random((1,15), Uniform::new(-10., 10.));
@@ -56,12 +45,10 @@ impl<T: RMLType + ScalarOperand + Scalar<Real = T>> Learner<T> for IterLinearReg
                 let res = now_target.into_owned() - weight_clone.dot(&batch.t());
                 let res = res.dot(&batch);
                 weight = weight + res.mapv(|a| a * self.lr) + self.lasso * res.norm_l1() + self.ridge * res.norm_l2()
-
             }
         }
         Self::LearnedModel {
             weight: weight.t().into_owned(),
-            basicfunc: self.basicfunc.clone(),
         }
     }
 }
@@ -71,11 +58,14 @@ impl<T: RMLType + ScalarOperand + Scalar<Real = T>> Learner<T> for IterLinearReg
 mod test {
     use super::*;
     use approx::assert_abs_diff_eq;
+    use ndarray_rand::rand_distr::Normal;
+    use ndarray_rand::RandomExt;
+
+    use crate::linear::Estimator;
 
     #[test]
     fn test_iter() {
-        let mode = "_Sigmoid".to_string();
-        let model = IterLinearRegression::new(mode, 1000 as u32, 1e-3, 1e-8, 0.);
+        let model = IterLinearRegression::new(1000 as u32, 1e-3, 1e-8, 1e-9);
         let weight = Array::random((1,15), Normal::new(0.,1.).unwrap());
         let input = Array::random((100, 15), Normal::new(0.,1.).unwrap());
         let target = input.dot(&weight.t());
