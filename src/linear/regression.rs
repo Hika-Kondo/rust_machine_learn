@@ -56,16 +56,16 @@ pub fn cal_weight<T: RMLType>(input: Array2<T>, target: Array2<T>) -> Array2<T>{
 mod test {
     use super::*;
     use ndarray::*;
-    use approx::abs_diff_eq;
     use ndarray_rand::RandomExt;
     use ndarray_rand::rand_distr::Normal;
+    use approx::assert_abs_diff_eq;
 
     #[test]
     fn test_basic() {
-        let mode = "Sigmoid".to_string();
+        let mode = "_Sigmoid".to_string();
         let model = BasicLinearRegression::new(mode);
         let weight = Array::random((1,15), Normal::new(1.,1.).unwrap());
-        let input = Array::random((10, 15), Normal::new(1.,1.).unwrap());
+        let input = Array::random((100, 15), Normal::new(1.,1.).unwrap());
         let target = input.dot(&weight.t());
         let res = model.fit(input, target);
         println!("regression is {:?}", res.weight.shape());
@@ -74,6 +74,6 @@ mod test {
         let test_input = Array::random((12, 15), Normal::new(1.,1.).unwrap());
         let test_target = test_input.dot(&weight.t());
         let pred = res.predict(test_input);
-        abs_diff_eq!(pred, test_target);
+        assert_abs_diff_eq!(pred, test_target, epsilon=1e-3);
     }
 }

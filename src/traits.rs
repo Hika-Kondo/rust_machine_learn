@@ -1,7 +1,8 @@
 use ndarray_linalg::lapack::Lapack;
 use ndarray_linalg::types::Scalar;
-// use num_traits::Float;
 use ndarray_rand::rand_distr::Float as Float;
+use std::marker::{Sync, Send};
+use std::cmp::max;
 
 pub trait RMLType: Lapack + Scalar + Float {}
 

@@ -7,10 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-ndarray = "0.13.0"
+ndarray = {version="0.13.0", features=["blas", "rayon"]}
 ndarray-rand = "0.11.0"
 ndarray-linalg = { version = "0.12.1", features = ["intel-mkl"] }
 ndarray-stats = "0.3"
 num-traits = "0.2.14"
-approx = "0.3.1"
 rand = "0.8.1"
+rayon_ = { version = "1.0.3", optional = true, package = "rayon" }
+approx = "0.3.1"

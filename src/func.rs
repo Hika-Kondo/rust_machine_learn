@@ -38,7 +38,7 @@ mod test {
     use super::*;
 
     use ndarray::*;
-    use approx::abs_diff_eq;
+    use approx::assert_abs_diff_eq;
     #[test]
     fn test_exp() {
         // for Array2<f64>
@@ -47,13 +47,13 @@ mod test {
         let target: Array2<f64> = arr2(&[
             [2.718281828459045, 2.718281828459045],
             [2.718281828459045, 2.718281828459045]]);
-        abs_diff_eq!(input, target, epsilon=1e-12);
+        assert_abs_diff_eq!(input, target, epsilon=1e-12);
 
         // for Array1<f32>
         let mut input: Array1<f32> = arr1(&[1f32, 1f32]);
         input = input.exp();
         let target: Array1<f32> = arr1(&[2.7182817, 2.7182817]);
-        abs_diff_eq!(input, target, epsilon=1e-6);
+        assert_abs_diff_eq!(input, target, epsilon=1e-6);
     }
 
     #[test]
@@ -63,6 +63,6 @@ mod test {
             [0.7310585786,0.7310585786],
             [0.7310585786,0.7310585786]]);
         input = input.sigmoid();
-        abs_diff_eq!(input, target, epsilon=1e-6);
+        assert_abs_diff_eq!(input, target, epsilon=1e-6);
     }
 }

@@ -1,6 +1,10 @@
 use ndarray::{Array2, Array , Axis, ScalarOperand};
+use ndarray::parallel;
 use ndarray_rand::rand_distr::Normal;
+use ndarray::prelude::*;
 use ndarray_rand::RandomExt;
+use ndarray_linalg::norm::Norm;
+use ndarray_linalg::types::Scalar;
 
 use crate::estimator::{Learner};
 use crate::traits::RMLType;
@@ -13,11 +17,12 @@ pub struct IterLinearRegression<T: RMLType> {
     epoch: u32,
     lr: T,
     lasso: T,
+    ridge: T,
 }
 
 
 impl<T: RMLType> IterLinearRegression::<T> {
-    pub fn new(str: String, epoch: u32, lr: T, lasso: T) -> IterLinearRegression::<T> {
+    pub fn new(str: String, epoch: u32, lr: T, lasso: T, ridge: T) -> IterLinearRegression::<T> {
         let func = match &*str {
             "Sigmoid" => BasicFunc::Sigmoid,
             _ => BasicFunc::None,
@@ -27,12 +32,13 @@ impl<T: RMLType> IterLinearRegression::<T> {
             epoch: epoch,
             lr: lr,
             lasso: lasso,
+            ridge: ridge
         }
     }
 }
 
 
-impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
+impl<T: RMLType + ScalarOperand + Scalar<Real = T>> Learner<T> for IterLinearRegression::<T> {
     type LearnedModel = LinearResult::<T>;
     type Input = Array2<T>;
     type Target = Array2<T>;
@@ -49,7 +55,8 @@ impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
                 let weight_clone = weight.clone();
                 let res = now_target.into_owned() - weight_clone.dot(&batch.t());
                 let res = res.dot(&batch);
-                weight = weight + res.mapv(|a| a * self.lr) + self.lasso * res.sum()
+                weight = weight + res.mapv(|a| a * self.lr) + self.lasso * res.norm_l1() + self.ridge * res.norm_l2()
+
             }
         }
         Self::LearnedModel {
@@ -63,20 +70,22 @@ impl<T: RMLType + ScalarOperand> Learner<T> for IterLinearRegression::<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use approx::abs_diff_eq;
+    use approx::assert_abs_diff_eq;
 
     #[test]
     fn test_iter() {
-        let mode = "Sigmoid".to_string();
-        let model = IterLinearRegression::new(mode, 100 as u32, 1e-3, 1e-5);
-        let weight = Array::random((1,15), Normal::new(1.,1.).unwrap());
-        let input = Array::random((100, 15), Normal::new(1.,1.).unwrap());
+        let mode = "_Sigmoid".to_string();
+        let model = IterLinearRegression::new(mode, 1000 as u32, 1e-3, 1e-8, 0.);
+        let weight = Array::random((1,15), Normal::new(0.,1.).unwrap());
+        let input = Array::random((100, 15), Normal::new(0.,1.).unwrap());
         let target = input.dot(&weight.t());
         let res = model.fit(input, target);
         println!("sgd weight is {:?}", res.weight.shape());
-        let test_input = Array::random((12, 15), Normal::new(1.,1.).unwrap());
+        let test_input = Array::random((12, 15), Normal::new(0.,1.).unwrap());
         let test_target = test_input.dot(&weight.t());
         let pred = res.predict(test_input);
-        abs_diff_eq!(pred, test_target);
+        println!("{:?}", pred);
+        println!("{:?}", test_target);
+        assert_abs_diff_eq!(pred, test_target, epsilon=1e-3);
         }
 }
